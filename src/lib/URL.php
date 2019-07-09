@@ -1,5 +1,6 @@
 <?php
-namespace esperecyan\url\lib;
+
+namespace NGSOFT\URL\lib;
 
 /**
  * A universal identifier (a URL record).
@@ -8,120 +9,117 @@ namespace esperecyan\url\lib;
  * @link https://url.spec.whatwg.org/#urls URL Standard
  * @property bool $nonRelativeFlag [Deprecated] Alias of $cannotBeABaseURLFlag.
  */
-class URL
-{
+class URL {
+
     /**
      * @var string A URL’s scheme is a string that identifies the type of URL
      *      and can be used to dispatch a URL for further processing after parsing.
      * @link https://url.spec.whatwg.org/#concept-url-scheme URL Standard
      */
     public $scheme = '';
-    
+
     /**
      * @var string A URL’s username is a string identifying a user.
      * @link https://url.spec.whatwg.org/#concept-url-username URL Standard
      */
     public $username = '';
-    
+
     /**
      * @var string A URL’s password is either null or a string identifying a user’s credentials.
      * @link https://url.spec.whatwg.org/#concept-url-password URL Standard
      */
     public $password = '';
-    
+
     /**
      * @var string|int|float|int[]|null A URL’s host is either null or a host.
      * @link https://url.spec.whatwg.org/#concept-url-host URL Standard
      */
     public $host = null;
-    
+
     /**
      * @var int|null A URL’s port is either null or a 16-bit integer that identifies a networking port.
      * @link https://url.spec.whatwg.org/#concept-url-port URL Standard
      */
     public $port = null;
-    
+
     /**
      * @var string[] A URL’s path is a list of zero or more strings holding data,
      *      usually identifying a location in hierarchical form.
      * @link https://url.spec.whatwg.org/#concept-url-path URL Standard
      */
     public $path = [];
-    
+
     /**
      * @var string|null A URL’s query is either null or a string holding data.
      * @link https://url.spec.whatwg.org/#concept-url-query URL Standard
      */
     public $query = null;
-    
+
     /**
      * @var string A URL’s fragment is either null or a string holding data
      *      that can be used for further processing on the resource the URL’s other components identify.
      * @link https://url.spec.whatwg.org/#concept-url-fragment URL Standard
      */
     public $fragment = null;
-    
+
     /**
      * @var A URL also has an associated cannot-be-a-base-URL flag.
      * @link https://url.spec.whatwg.org/#url-cannot-be-a-base-url-flag URL Standard
      */
     public $cannotBeABaseURLFlag = false;
-    
+
     /**
      * @param string $name
      * @return string
      */
-    public function __get($name)
-    {
+    public function __get($name) {
         if ($name === 'nonRelativeFlag') {
             return $this->cannotBeABaseURLFlag;
         }
         TypeHinter::triggerVisibilityErrorOrUndefinedNotice();
     }
-    
+
     /**
      * @param string $name
      * @param bool $value
      */
-    public function __set($name, $value)
-    {
+    public function __set($name, $value) {
         if ($name === 'nonRelativeFlag') {
             $this->cannotBeABaseURLFlag = $value;
         }
         TypeHinter::triggerVisibilityErrorOrDefineProperty();
     }
-    
+
     /**
      * @var object|null A URL also has an associated object that is either null or a Blob object.
      * @link https://url.spec.whatwg.org/#concept-url-object URL Standard
      */
     public $object = null;
-    
+
     /**
      * @var (int|null)[] A special scheme is a scheme in the key of this array.
      *      A default port is a special scheme’s optional corresponding port and is in the value on the key.
      * @link https://url.spec.whatwg.org/#special-scheme URL Standard
      */
     public static $specialSchemes = [
-        'ftp'    =>   21,
-        'file'   => null,
-        'gopher' =>   70,
-        'http'   =>   80,
-        'https'  =>  443,
-        'ws'     =>   80,
-        'wss'    =>  443,
+        'ftp' => 21,
+        'file' => null,
+        'gopher' => 70,
+        'http' => 80,
+        'https' => 443,
+        'ws' => 80,
+        'wss' => 443,
     ];
-    
+
     /**
      * A URL is special if its scheme is a special scheme.
      * @link https://url.spec.whatwg.org/#is-special URL Standard
      * @return bool Return true if a URL is special.
      */
-    public function isSpecial()
-    {
+    public function isSpecial() {
         return array_key_exists($this->scheme, self::$specialSchemes);
     }
-    
+
     /**
      * @var string[] A local scheme is a scheme that is one of “about”, “blob”, “data”, and “filesystem”.
      * @deprecated 5.0.0 The term “local scheme” has been moved
@@ -131,7 +129,7 @@ class URL
      * @link https://fetch.spec.whatwg.org/#local-scheme URL Standard
      */
     public static $localSchemes = ['about', 'blob', 'data', 'filesystem'];
-    
+
     /**
      * A URL is local if its scheme is a local scheme.
      * @deprecated 5.0.0 The term “URL is local” has been moved
@@ -141,106 +139,99 @@ class URL
      * @link https://fetch.spec.whatwg.org/#is-local URL Standard
      * @return bool Return true if a URL is local.
      */
-    public function isLocal()
-    {
+    public function isLocal() {
         return in_array($this->scheme, self::$localSchemes);
     }
-    
+
     /**
      * A URL includes credentials if either its username is not the empty string or its password is non-null.
      * @link https://url.spec.whatwg.org/#include-credentials URL Standard
      * @return bool Return true if a URL includes credentials.
      */
-    public function isIncludingCredentials()
-    {
+    public function isIncludingCredentials() {
         return $this->username !== '' || $this->password !== '';
     }
-    
+
     /**
      * A URL cannot have a username/password/port
      *      if its host is null or the empty string, its cannot-be-a-base-URL flag is set, or its scheme is “file”.
      * @link https://url.spec.whatwg.org/#cannot-have-a-username-password-port URL Standard
      * @return bool Return true if a URL cannot have a username/password/port.
      */
-    public function cannotHaveUsernamePasswordPort()
-    {
+    public function cannotHaveUsernamePasswordPort() {
         return in_array($this->host, [null, ''], true) || $this->cannotBeABaseURLFlag || $this->scheme === 'file';
     }
-    
+
     /**
      * The regular expression (PCRE) pattern matching a Windows drive letter.
      * @var string
      * @link https://url.spec.whatwg.org/#windows-drive-letter URL Standard
      */
     const WINDOWS_DRIVE_LETTER = '/^[a-z][:|]$/ui';
-    
+
     /**
      * The regular expression (PCRE) pattern matching a normalized Windows drive letter.
      * @var string
      * @link https://url.spec.whatwg.org/#normalized-windows-drive-letter URL Standard
      */
     const NORMALIZED_WINDOWS_DRIVE_LETTER = '/^[a-z]:$/ui';
-    
+
     /**
      * Returns `true` if the specified string “starts with a Windows drive letter”.
      * @link https://url.spec.whatwg.org/#start-with-a-windows-drive-letter URL Standard
      * @param string $str A UTF-8 string.
      * @return bool
      */
-    public static function stringStartsWithWindowsDriveLetter($str)
-    {
+    public static function stringStartsWithWindowsDriveLetter($str) {
         return preg_match('{^[a-z][:|](?:$|[/\\\\?#])}ui', $str) === 1;
     }
-    
+
     /**
      * Shortens a path.
      * @link https://url.spec.whatwg.org/#shorten-a-urls-path URL Standard
      */
-    public function shortenPath()
-    {
-        if ($this->scheme !== 'file'
-            || !(count($this->path) === 1 && preg_match(static::NORMALIZED_WINDOWS_DRIVE_LETTER, $this->path[0]) === 1)) {
+    public function shortenPath() {
+        if ($this->scheme !== 'file' || !(count($this->path) === 1 && preg_match(static::NORMALIZED_WINDOWS_DRIVE_LETTER, $this->path[0]) === 1)) {
             array_pop($this->path);
         }
     }
-    
+
     /**
      * Alias of shortenPath().
      * @deprecated 5.0.0 The method has been renamed to shortenPath.
-     * @see \esperecyan\url\lib\URL::shortenPath()
+     * @see \NGSOFT\URL\lib\URL::shortenPath()
      * @link https://github.com/whatwg/url/commit/c94f6f2220e9b988f079d1bf903417c1f7695d89
      *      Editorial: pop → shorten · whatwg/url@c94f6f2
      */
-    public function popPath()
-    {
+    public function popPath() {
         $this->shortenPath();
     }
-    
+
     /**
      * The regular expression (PCRE) pattern matching a single-dot path segment.
      * @var string
      * @link https://url.spec.whatwg.org/#syntax-url-path-segment-dot URL Standard
      */
     const SINGLE_DOT_PATH_SEGMENT = '/^(?:\\.|%2e)$/ui';
-    
+
     /**
      * The regular expression (PCRE) pattern matching a double-dot path segment.
      * @var string
      * @link https://url.spec.whatwg.org/#syntax-url-path-segment-dotdot URL Standard
      */
     const DOUBLE_DOT_PATH_SEGMENT = '/^(?:\\.|%2e){2}$/ui';
-    
+
     /**
      * The regular expression (PCRE) pattern matching the URL code points.
      * @var string
      * @link https://url.spec.whatwg.org/#url-code-points URL Standard
      */
     const URL_CODE_POINTS = '/[!$&\'()*+,\\-.\\/:;=?@_~\xC2\xA0-퟿-﷏ﷰ-�𐀀-🿽𠀀-𯿽𰀀-𿿽񀀀-񏿽񐀀-񟿽񠀀-񯿽񰀀-񿿽򀀀-򏿽򐀀-򟿽򠀀-򯿽򰀀-򿿽󀀀-󏿽󐀀-󟿽󠀀-󯿽󰀀-󿿽􀀀-􏿽]/u';
-    
-    private function __construct()
-    {
+
+    private function __construct() {
+
     }
-    
+
     /**
      * The URL parser.
      * @link https://url.spec.whatwg.org/#concept-url-parser URL Standard
@@ -249,11 +240,10 @@ class URL
      * @param string|null $encodingOverride A valid name of an encoding.
      * @return URL|false
      */
-    public static function parseURL($input, self $base = null, $encodingOverride = null)
-    {
+    public static function parseURL($input, self $base = null, $encodingOverride = null) {
         return self::parseBasicURL($input, $base, $encodingOverride);
     }
-    
+
     /**
      * The basic URL parser.
      * @link https://url.spec.whatwg.org/#concept-basic-url-parser URL Standard
@@ -265,16 +255,16 @@ class URL
      * @return URL|false|void
      */
     public static function parseBasicURL(
-        $input,
-        self $base = null,
-        $encodingOverride = null,
-        array $urlAndStateOverride = null
+            $input,
+            self $base = null,
+            $encodingOverride = null,
+            array $urlAndStateOverride = null
     ) {
         $input = str_replace(["\t", "\n", "\r"], '', $input);
         if ($urlAndStateOverride) {
             $url = $urlAndStateOverride['url'];
-            $stateOverride = (string)$urlAndStateOverride['state override'];
-            $string = (string)$input;
+            $stateOverride = (string) $urlAndStateOverride['state override'];
+            $string = (string) $input;
             $state = $stateOverride;
         } else {
             $url = new self();
@@ -282,15 +272,15 @@ class URL
             $string = trim($input, "\x00.. ");
             $state = 'scheme start state';
         }
-        $encoding = $encodingOverride ? URLencoding::getOutputEncoding((string)$encodingOverride) : 'UTF-8';
+        $encoding = $encodingOverride ? URLencoding::getOutputEncoding((string) $encodingOverride) : 'UTF-8';
         $buffer = '';
         $atFlag = false;
         $bracketFlag = false;
-        
+
         $codePoints = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
         for ($pointer = 0; true; $pointer++) {
             $c = isset($codePoints[$pointer]) ? $codePoints[$pointer] : '';
-            
+
             switch ($state) {
                 case 'scheme start state':
                     if (stripos('abcdefghijklmnopqrstuvwxyz', $c) !== false) {
@@ -309,16 +299,13 @@ class URL
                         $buffer .= strtolower($c);
                     } elseif ($c === ':') {
                         if ($stateOverride && (
-                            array_key_exists($url->scheme, self::$specialSchemes) !== array_key_exists($buffer, self::$specialSchemes)
-                            || ($url->isIncludingCredentials() || !is_null($url->port)) && $buffer === 'file'
-                            || $url->scheme === 'file' && in_array($url->host, ['', null], true)
-                        )) {
+                                array_key_exists($url->scheme, self::$specialSchemes) !== array_key_exists($buffer, self::$specialSchemes) || ($url->isIncludingCredentials() || !is_null($url->port)) && $buffer === 'file' || $url->scheme === 'file' && in_array($url->host, ['', null], true)
+                                )) {
                             return;
                         }
                         $url->scheme = $buffer;
                         if ($stateOverride) {
-                            if (isset(self::$specialSchemes[$url->scheme])
-                                && self::$specialSchemes[$url->scheme] === $url->port) {
+                            if (isset(self::$specialSchemes[$url->scheme]) && self::$specialSchemes[$url->scheme] === $url->port) {
                                 $url->port = null;
                             }
                             return;
@@ -384,7 +371,7 @@ class URL
                         $pointer--;
                     }
                     break;
-                    
+
                 case 'relative state':
                     $url->scheme = $base->scheme;
                     switch ($c) {
@@ -474,13 +461,13 @@ class URL
                         $atFlag = true;
                         $usernameAndPassword = explode(':', $buffer, 2);
                         $url->username .= Infrastructure::percentEncodeCodePoints(
-                            Infrastructure::USERINFO_PERCENT_ENCODE_SET,
-                            $usernameAndPassword[0]
+                                        Infrastructure::USERINFO_PERCENT_ENCODE_SET,
+                                        $usernameAndPassword[0]
                         );
                         if (isset($usernameAndPassword[1])) {
                             $url->password .= Infrastructure::percentEncodeCodePoints(
-                                Infrastructure::USERINFO_PERCENT_ENCODE_SET,
-                                $usernameAndPassword[1]
+                                            Infrastructure::USERINFO_PERCENT_ENCODE_SET,
+                                            $usernameAndPassword[1]
                             );
                         }
                         $buffer = '';
@@ -516,8 +503,7 @@ class URL
                         $pointer--;
                         if ($buffer === '' && $url->isSpecial()) {
                             return false;
-                        } elseif ($stateOverride && $buffer === ''
-                            && ($url->isIncludingCredentials() || !is_null($url->port))) {
+                        } elseif ($stateOverride && $buffer === '' && ($url->isIncludingCredentials() || !is_null($url->port))) {
                             return false;
                         }
                         $host = HostProcessing::parseHost($buffer, $url->isSpecial());
@@ -546,13 +532,11 @@ class URL
                         $buffer .= $c;
                     } elseif (in_array($c, ['', '/', '?', '#']) || $c === '\\' && $url->isSpecial() || $stateOverride) {
                         if ($buffer !== '') {
-                            $port = (int)$buffer;
+                            $port = (int) $buffer;
                             if ($port > pow(2, 16) - 1) {
                                 return false;
                             }
-                            $url->port = isset(self::$specialSchemes[$url->scheme]) && self::$specialSchemes[$url->scheme] === $port
-                                ? null
-                                : $port;
+                            $url->port = isset(self::$specialSchemes[$url->scheme]) && self::$specialSchemes[$url->scheme] === $port ? null : $port;
                             $buffer = '';
                         }
                         if ($stateOverride) {
@@ -595,8 +579,8 @@ class URL
                                 break;
                             default:
                                 if (!static::stringStartsWithWindowsDriveLetter(
-                                    implode('', array_slice($codePoints, $pointer))
-                                )) {
+                                                implode('', array_slice($codePoints, $pointer))
+                                        )) {
                                     $url->host = $base->host;
                                     $url->path = $base->path;
                                     $url->shortenPath();
@@ -615,10 +599,9 @@ class URL
                         $state = 'file host state';
                     } else {
                         if ($base && $base->scheme === 'file' && !static::stringStartsWithWindowsDriveLetter(
-                            implode('', array_slice($codePoints, $pointer))
-                        )) {
-                            if (isset($base->path[0])
-                                && preg_match(static::NORMALIZED_WINDOWS_DRIVE_LETTER, $base->path[0]) === 1) {
+                                        implode('', array_slice($codePoints, $pointer))
+                                )) {
+                            if (isset($base->path[0]) && preg_match(static::NORMALIZED_WINDOWS_DRIVE_LETTER, $base->path[0]) === 1) {
                                 $url->path[] = $base->path[0];
                             } else {
                                 $url->host = $base->host;
@@ -678,20 +661,16 @@ class URL
                     break;
 
                 case 'path state':
-                    if (in_array($c, ['', '/']) || $c === '\\' && $url->isSpecial()
-                        || !$stateOverride && in_array($c, ['?', '#'])) {
+                    if (in_array($c, ['', '/']) || $c === '\\' && $url->isSpecial() || !$stateOverride && in_array($c, ['?', '#'])) {
                         if (preg_match(self::DOUBLE_DOT_PATH_SEGMENT, $buffer) === 1) {
                             $url->shortenPath();
                             if (!($c === '/' || $c === '\\' && $url->isSpecial())) {
                                 $url->path[] = '';
                             }
-                        } elseif (preg_match(self::SINGLE_DOT_PATH_SEGMENT, $buffer) === 1
-                            && !($c === '/' || $c === '\\' && $url->isSpecial())) {
+                        } elseif (preg_match(self::SINGLE_DOT_PATH_SEGMENT, $buffer) === 1 && !($c === '/' || $c === '\\' && $url->isSpecial())) {
                             $url->path[] = '';
                         } elseif (preg_match(self::SINGLE_DOT_PATH_SEGMENT, $buffer) !== 1) {
-                            if ($url->scheme === 'file'
-                                && !$url->path
-                                && preg_match(Infrastructure::WINDOWS_DRIVE_LETTER, $buffer) === 1) {
+                            if ($url->scheme === 'file' && !$url->path && preg_match(Infrastructure::WINDOWS_DRIVE_LETTER, $buffer) === 1) {
                                 if (!in_array($url->host, ['', null], true)) {
                                     $url->host = '';
                                 }
@@ -726,8 +705,7 @@ class URL
                         $state = 'fragment state';
                     } else {
                         if ($c !== '') {
-                            $url->path[0]
-                                .= Infrastructure::utf8PercentEncode(Infrastructure::C0_CONTROL_PERCENT_ENCODE_SET, $c);
+                            $url->path[0] .= Infrastructure::utf8PercentEncode(Infrastructure::C0_CONTROL_PERCENT_ENCODE_SET, $c);
                         }
                     }
                     break;
@@ -752,8 +730,8 @@ class URL
                 case 'fragment state':
                     if ($c !== '') {
                         $url->fragment .= Infrastructure::utf8PercentEncode(
-                            Infrastructure::C0_CONTROL_PERCENT_ENCODE_SET,
-                            str_replace("\x00", '', implode('', array_slice($codePoints, $pointer)))
+                                        Infrastructure::C0_CONTROL_PERCENT_ENCODE_SET,
+                                        str_replace("\x00", '', implode('', array_slice($codePoints, $pointer)))
                         );
                     }
                     break 2;
@@ -761,44 +739,39 @@ class URL
                 default:
                     throw new \DomainException(sprintf('"%s" is an unknown state', $state));
             }
-            
+
             if ($pointer >= 0 && !isset($codePoints[$pointer])) {
                 break;
             }
         }
-        
+
         return $url;
     }
-    
+
     /**
      * Sets the username of the URL given $username.
      * @link https://url.spec.whatwg.org/#set-the-username URL Standard
      * @param string $username A UTF-8 string.
      */
-    public function setUsername($username)
-    {
-        $this->username
-            = Infrastructure::percentEncodeCodePoints(Infrastructure::USERINFO_PERCENT_ENCODE_SET, $username);
+    public function setUsername($username) {
+        $this->username = Infrastructure::percentEncodeCodePoints(Infrastructure::USERINFO_PERCENT_ENCODE_SET, $username);
     }
-    
+
     /**
      * Sets the password of the URL given $password.
      * @link https://url.spec.whatwg.org/#set-the-password URL Standard
      * @param string $password A UTF-8 string.
      */
-    public function setPassword($password)
-    {
-        $this->password
-            = Infrastructure::percentEncodeCodePoints(Infrastructure::USERINFO_PERCENT_ENCODE_SET, $password);
+    public function setPassword($password) {
+        $this->password = Infrastructure::percentEncodeCodePoints(Infrastructure::USERINFO_PERCENT_ENCODE_SET, $password);
     }
-    
+
     /**
      * The URL serializer.
      * @link https://url.spec.whatwg.org/#concept-url-serializer URL Standard
      * @param bool $excludeFragmentFlag An exclude fragment flag.
      */
-    public function serializeURL($excludeFragmentFlag = false)
-    {
+    public function serializeURL($excludeFragmentFlag = false) {
         $output = $this->scheme . ':';
         if (!is_null($this->host)) {
             $output .= '//';
@@ -816,7 +789,7 @@ class URL
         } elseif (is_null($this->host) && $this->scheme === 'file') {
             $output .= '//';
         }
-        $output .= $this->cannotBeABaseURLFlag ? $this->path[0] :  '/' . implode('/', $this->path);
+        $output .= $this->cannotBeABaseURLFlag ? $this->path[0] : '/' . implode('/', $this->path);
         if (!is_null($this->query)) {
             $output .= '?' . $this->query;
         }
@@ -825,21 +798,20 @@ class URL
         }
         return $output;
     }
-    
+
     /**
      * A URL’s origin is the origin, switching on URL’s scheme.
      * @link https://url.spec.whatwg.org/#origin URL Standard
      * @return (string|int|null)[]|string An array with the first element the scheme, the second element the host,
      *      the third element the port, and the four element the domain. Or an unique string of 23 characters.
      */
-    public function getOrigin()
-    {
+    public function getOrigin() {
         switch ($this->scheme) {
             case 'blob':
                 $url = self::parseBasicURL($this->path[0]);
                 $origin = $url === false ? uniqid('', true) : $url->getOrigin();
                 break;
-            
+
             case 'ftp':
             case 'gopher':
             case 'http':
@@ -853,10 +825,11 @@ class URL
                     null,
                 ];
                 break;
-            
+
             default:
                 $origin = uniqid('', true);
         }
         return $origin;
     }
+
 }

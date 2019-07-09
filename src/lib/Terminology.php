@@ -1,15 +1,16 @@
 <?php
-namespace esperecyan\url\lib;
+
+namespace NGSOFT\URL\lib;
 
 /**
  * @deprecated 3.2.0 The constants are moved to {@link Infrastructure} or {@link URL}.
- * @see \esperecyan\url\lib\Infrastructure
- * @see \esperecyan\url\lib\URL
+ * @see \NGSOFT\URL\lib\Infrastructure
+ * @see \NGSOFT\URL\lib\URL
  * @link https://github.com/whatwg/url/commit/e5b57a0dfe77464282f3b70c1e605ae40bec278d?w=
  *      Rename Terminology to Infrastructure · whatwg/url@e5b57a0
  */
-class Terminology
-{
+class Terminology {
+
     /**
      * Alias of {@link URL}::WINDOWS_DRIVE_LETTER.
      * @var string
@@ -18,16 +19,17 @@ class Terminology
      *      Define syntax for file URLs. Third part towards fixing #33. · whatwg/url@0755b48
      */
     const POTENTIAL_WINDOWS_DRIVE_LETTER = '/^[a-z][:|]$/ui';
-    
+
     /**
      * Alias of {@link URL}::WINDOWS_DRIVE_LETTER.
      * @var string
      */
     const WINDOWS_DRIVE_LETTER = '/^[a-z][:|]$/ui';
-    
+
     /**
      * Alias of {@link URL}::NORMALIZED_WINDOWS_DRIVE_LETTER.
      * @var string
      */
     const NORMALIZED_WINDOWS_DRIVE_LETTER = '/^[a-z]:$/ui';
+
 }

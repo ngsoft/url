@@ -1,5 +1,6 @@
 <?php
-namespace esperecyan\url;
+
+namespace NGSOFT\URL;
 
 use esperecyan\webidl\TypeHinter;
 use esperecyan\webidl\TypeError;
@@ -9,43 +10,42 @@ use esperecyan\webidl\TypeError;
  * @link https://url.spec.whatwg.org/#interface-urlsearchparams URL Standard
  * @link https://developer.mozilla.org/docs/Web/API/URLSearchParams URLSearchParams - Web API Interfaces | MDN
  */
-class URLSearchParams implements \IteratorAggregate
-{
+class URLSearchParams implements \IteratorAggregate {
+
     /**
      * @var string[][] List of name-value pairs.
      * @link https://url.spec.whatwg.org/#concept-urlsearchparams-list URL Standard
      */
     private $list = [];
-    
+
     /**
      * @var URL|null
      * @link https://url.spec.whatwg.org/#concept-urlsearchparams-url-object URL Standard
      */
     private $urlObject = null;
-    
+
     /**
      * @link https://url.spec.whatwg.org/#concept-urlsearchparams-new URL Standard
      * @param string[][]|string[]|string|URLSearchParams $init
      *      An array of two-element arrays with the first element the name and the second the value,
      *      associative array, USVString, or URLSearchParams.
      */
-    public function __construct($init = '')
-    {
+    public function __construct($init = '') {
         $initValue = TypeHinter::to(
-            // The URL Standard expects an interface having a pair iterator to match “sequence<sequence<V>>”,
-            // but it matches “record<V, V>” on the API of esperecyan/webidl.
-            // So “ or esperecyan\url\URLSearchParams”is appended here.
-            '(sequence<sequence<USVString>> or record<USVString, USVString> or USVString'
-                . ' or esperecyan\url\URLSearchParams)',
-            $init
+                        // The URL Standard expects an interface having a pair iterator to match “sequence<sequence<V>>”,
+                        // but it matches “record<V, V>” on the API of esperecyan/webidl.
+                        // So “ or NGSOFT\URL\URLSearchParams”is appended here.
+                        '(sequence<sequence<USVString>> or record<USVString, USVString> or USVString'
+                        . ' or NGSOFT\URL\URLSearchParams)',
+                        $init
         );
-        
+
         static::createNewURLSearchParamsObject(
-            $this,
-            is_string($initValue) ? preg_replace('/^\\?/u', '', $initValue) : $initValue
+                $this,
+                is_string($initValue) ? preg_replace('/^\\?/u', '', $initValue) : $initValue
         );
     }
-    
+
     /**
      * Creates a new URLSearchParams object.
      * @link https://url.spec.whatwg.org/#concept-urlsearchparams-new URL Standard
@@ -54,8 +54,7 @@ class URLSearchParams implements \IteratorAggregate
      * @throws TypeError
      * @return self
      */
-    private static function createNewURLSearchParamsObject($query, $init)
-    {
+    private static function createNewURLSearchParamsObject($query, $init) {
         if (!$query) {
             $query = new static();
         }
@@ -65,7 +64,7 @@ class URLSearchParams implements \IteratorAggregate
             foreach ($init as $pair) {
                 if (count($pair) !== 2) {
                     throw new TypeError(
-                        'URLSearchParams require name/value tuples when being initialized by a sequence.'
+                            'URLSearchParams require name/value tuples when being initialized by a sequence.'
                     );
                 }
             }
@@ -79,54 +78,50 @@ class URLSearchParams implements \IteratorAggregate
         }
         return $query;
     }
-    
+
     /**
      * A URLSearchParams object’s update steps.
      * @link https://url.spec.whatwg.org/#concept-urlsearchparams-update URL Standard
      */
-    private function update()
-    {
+    private function update() {
         if ($this->urlObject) {
             \Closure::bind(function ($urlObject, $query) {
                 $urlObject->url->query = $query === '' ? null : $query;
             }, null, $this->urlObject)->__invoke($this->urlObject, lib\URLencoding::serializeURLencoded($this->list));
         }
     }
-    
+
     /**
      * Appends a new name-value pair whose name is name and value is value, to the list of name-value pairs.
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-appendname-value URL Standard
      * @param string $name A USVString.
      * @param string $value A USVString.
      */
-    public function append($name, $value)
-    {
+    public function append($name, $value) {
         $this->list[] = [TypeHinter::to('USVString', $name, 0), TypeHinter::to('USVString', $value, 1)];
         $this->update();
     }
-    
+
     /**
      * Removes all name-value pairs whose name is name.
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-deletename URL Standard
      * @param string $name A USVString.
      */
-    public function delete($name)
-    {
+    public function delete($name) {
         $nameString = TypeHinter::to('USVString', $name);
         array_splice($this->list, 0, count($this->list), array_filter($this->list, function ($pair) use ($nameString) {
-            return $pair[0] !== $nameString;
-        }));
+                    return $pair[0] !== $nameString;
+                }));
         $this->update();
     }
-    
+
     /**
      * Returns the value of the first name-value pair whose name is name, and null if there is no such pair.
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-getname URL Standard
      * @param string $name
      * @return string|null A USVString or null.
      */
-    public function get($name)
-    {
+    public function get($name) {
         $nameString = TypeHinter::to('USVString', $name);
         $value = null;
         foreach ($this->list as $pair) {
@@ -137,15 +132,14 @@ class URLSearchParams implements \IteratorAggregate
         }
         return $value;
     }
-    
+
     /**
      * Returns the values of all name-value pairs whose name is name, in list order, and the empty sequence otherwise.
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-getallname URL Standard
      * @param string $name A USVString.
      * @return string[] An array of a USVString.
      */
-    public function getAll($name)
-    {
+    public function getAll($name) {
         $nameString = TypeHinter::to('USVString', $name);
         $values = [];
         foreach ($this->list as $pair) {
@@ -155,18 +149,17 @@ class URLSearchParams implements \IteratorAggregate
         }
         return $values;
     }
-    
+
     /**
      * Returns true if there is a name-value pair whose name is name, and false otherwise.
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-hasname URL Standard
      * @param string $name A USVString.
      * @return bool
      */
-    public function has($name)
-    {
+    public function has($name) {
         return !is_null($this->get(TypeHinter::to('USVString', $name)));
     }
-    
+
     /**
      * If there are any name-value pairs whose name is name, set the value of the first such name-value pair to value and remove the others.
      * Otherwise, append a new name-value pair whose name is name and value is value, to the list of name-value pairs.
@@ -174,8 +167,7 @@ class URLSearchParams implements \IteratorAggregate
      * @param string $name A USVString.
      * @param string $value A USVString.
      */
-    public function set($name, $value)
-    {
+    public function set($name, $value) {
         $nameString = TypeHinter::to('USVString', $name, 0);
         $valueString = TypeHinter::to('USVString', $value, 1);
         $already = false;
@@ -198,35 +190,33 @@ class URLSearchParams implements \IteratorAggregate
         }
         $this->update();
     }
-    
+
     /**
      * Sorts all name-value pair by their names and comparing JavaScript strings (UTF-16).
      * @link https://url.spec.whatwg.org/#dom-urlsearchparams-sort URL Standard
      * @param string $name A USVString.
      * @param string $value A USVString.
      */
-    public function sort()
-    {
+    public function sort() {
         array_multisort(array_map(function ($pair) {
-            return mb_convert_encoding($pair[0], 'UTF-16BE', 'UTF-8');
-        }, $this->list), SORT_STRING, range(1, count($this->list)), $this->list);
+                    return mb_convert_encoding($pair[0], 'UTF-16BE', 'UTF-8');
+                }, $this->list), SORT_STRING, range(1, count($this->list)), $this->list);
     }
-    
+
     /**
      * @uses lib\URLSearchParamsIterator
      */
-    public function getIterator()
-    {
+    public function getIterator() {
         return new lib\URLSearchParamsIterator($this->list, $this);
     }
-    
+
     /**
      * Returns the serialization of the URLSearchParams object's associated list of name-value pairs.
      * @link https://url.spec.whatwg.org/#stringification-behavior URL Standard
      * @return string A USVString.
      */
-    public function __toString()
-    {
+    public function __toString() {
         return lib\URLencoding::serializeURLencoded($this->list);
     }
+
 }

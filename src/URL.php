@@ -1,8 +1,17 @@
 <?php
-namespace esperecyan\url;
 
-use esperecyan\webidl\TypeHinter;
-use esperecyan\webidl\TypeError;
+namespace NGSOFT\URL;
+
+use Closure;
+use esperecyan\webidl\{
+    TypeError, TypeHinter
+};
+use InvalidArgumentException,
+    JsonSerializable;
+use NGSOFT\URL\lib\{
+    HostProcessing, URLencoding
+};
+use Psr\Http\Message\UriInterface;
 
 /**
  * The URL class represent an object providing static methods used for creating object URLs.
@@ -25,20 +34,20 @@ use esperecyan\webidl\TypeError;
  *      Returns a URLSearchParams object allowing to access the GET query arguments contained in the URL.
  * @property string $hash Is a USVString containing a ‘#’ followed by the fragment identifier of the URL.
  */
-class URL implements \JsonSerializable
-{
+class URL implements JsonSerializable, UriInterface {
+
     /**
      * @var lib\URL An associated URL.
      * @link https://url.spec.whatwg.org/#concept-url-url URL Standard
      */
     private $url;
-    
+
     /**
      * @var URLSearchParams An associated query object.
      * @link https://url.spec.whatwg.org/#concept-url-query-object URL Standard
      */
     private $queryObject;
-    
+
     /**
      * The constructor returns a newly created URL object representing the URL defined by the parameters.
      * @link https://url.spec.whatwg.org/#dom-URL-URL URL Standard
@@ -50,8 +59,7 @@ class URL implements \JsonSerializable
      *      If not specified, and no $base is passed in parameters, it default to 'about:blank'.
      * @throws TypeError If the given base URL or the resulting URL are not valid URLs, a TypeError is thrown.
      */
-    public function __construct($url, $base = null)
-    {
+    public function __construct($url, $base = null) {
         $parsedBase = null;
         if (!is_null($base)) {
             $parsedBase = lib\URL::parseBasicURL(TypeHinter::to('USVString', $base, 1));
@@ -63,58 +71,55 @@ class URL implements \JsonSerializable
         if ($this->url === false) {
             throw new TypeError(sprintf('<%s> is not a valid URL', $url));
         }
-        $this->queryObject = \Closure::bind(function ($query) {
-            return URLSearchParams::createNewURLSearchParamsObject(null, $query);
-        }, $this, 'esperecyan\url\URLSearchParams')->__invoke($this->url->query);
-        \Closure::bind(function ($queryObject) {
+        $this->queryObject = Closure::bind(function ($query) {
+                    return URLSearchParams::createNewURLSearchParamsObject(null, $query);
+                }, $this, 'NGSOFT\URL\URLSearchParams')->__invoke($this->url->query);
+        Closure::bind(function ($queryObject) {
             $queryObject->urlObject = $this;
         }, $this, $this->queryObject)->__invoke($this->queryObject);
     }
-    
+
     /**
      * Converts domain name to IDNA ASCII form.
      * @deprecated 5.0.0 URL::domainToASCII() has been removed from the URL Standard specification.
-     * @see \esperecyan\url\lib\HostProcessing::domainToASCII()
+     * @see HostProcessing::domainToASCII()
      * @link https://github.com/whatwg/url/commit/2bd0f59b98024921ab90e628b7a526cca5abcb5f
      *      Remove URL.domainToASCII and domainToUnicode · whatwg/url@2bd0f59y
      * @param string $domain
      * @return string Returns an empty string if $domain is an IPv6 address or an invalid domain.
      */
-    public static function domainToASCII($domain)
-    {
-        $asciiDomain = lib\HostProcessing::parseHost(TypeHinter::to('USVString', $domain), true);
+    public static function domainToASCII($domain) {
+        $asciiDomain = HostProcessing::parseHost(TypeHinter::to('USVString', $domain), true);
         return is_string($asciiDomain) ? $asciiDomain : '';
     }
-    
+
     /**
      * Converts domain name from IDNA ASCII to Unicode.
      * @deprecated 5.0.0 URL::domainToUnicode() has been removed from the URL Standard specification.
-     * @see \esperecyan\url\lib\HostProcessing::domainToUnicode()
+     * @see HostProcessing::domainToUnicode()
      * @link https://github.com/whatwg/url/commit/2bd0f59b98024921ab90e628b7a526cca5abcb5f
      *      Remove URL.domainToASCII and domainToUnicode · whatwg/url@2bd0f59y
      * @param string $domain
      * @return string Returns an empty string if $domain is an IPv6 address or an invalid domain.
      */
-    public static function domainToUnicode($domain)
-    {
-        $asciiDomain = lib\HostProcessing::parseHost(TypeHinter::to('USVString', $domain), true);
-        return is_string($asciiDomain) ? lib\HostProcessing::domainToUnicode($asciiDomain) : '';
+    public static function domainToUnicode($domain) {
+        $asciiDomain = HostProcessing::parseHost(TypeHinter::to('USVString', $domain), true);
+        return is_string($asciiDomain) ? HostProcessing::domainToUnicode($asciiDomain) : '';
     }
-    
+
     /**
      * @param string $name
      * @param string $value
      * @throws TypeError
      */
-    public function __set($name, $value)
-    {
+    public function __set($name, $value) {
         if (in_array(
-            $name,
-            ['href', 'protocol', 'username', 'password', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']
-        )) {
+                        $name,
+                        ['href', 'protocol', 'username', 'password', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']
+                )) {
             $input = TypeHinter::to('USVString', $value);
         }
-        
+
         switch ($name) {
             case 'href':
                 $parsedURL = lib\URL::parseBasicURL($input);
@@ -122,31 +127,31 @@ class URL implements \JsonSerializable
                     throw new TypeError(sprintf('<%s> is not a valid URL', $input));
                 }
                 $this->url = $parsedURL;
-                \Closure::bind(function ($list, $queryObject) {
-                    array_splice($queryObject->list, 0, count($queryObject->list), $list);
-                }, null, $this->queryObject)
-                    ->__invoke(lib\URLencoding::parseURLencodedString($this->url->query), $this->queryObject);
+                Closure::bind(function ($list, $queryObject) {
+                            array_splice($queryObject->list, 0, count($queryObject->list), $list);
+                        }, null, $this->queryObject)
+                        ->__invoke(URLencoding::parseURLencodedString($this->url->query), $this->queryObject);
                 break;
-            
+
             case 'protocol':
                 lib\URL::parseBasicURL($input . ':', null, null, [
                     'url' => $this->url,
                     'state override' => 'scheme start state'
                 ]);
                 break;
-            
+
             case 'username':
                 if (!$this->url->cannotHaveUsernamePasswordPort()) {
                     $this->url->setUsername($input);
                 }
                 break;
-            
+
             case 'password':
                 if (!$this->url->cannotHaveUsernamePasswordPort()) {
                     $this->url->setPassword($input);
                 }
                 break;
-            
+
             case 'host':
                 if (!$this->url->cannotBeABaseURLFlag) {
                     lib\URL::parseBasicURL($input, null, null, [
@@ -155,7 +160,7 @@ class URL implements \JsonSerializable
                     ]);
                 }
                 break;
-            
+
             case 'hostname':
                 if (!$this->url->cannotBeABaseURLFlag) {
                     lib\URL::parseBasicURL($input, null, null, [
@@ -164,7 +169,7 @@ class URL implements \JsonSerializable
                     ]);
                 }
                 break;
-            
+
             case 'port':
                 if (!$this->url->cannotHaveUsernamePasswordPort()) {
                     if ($input === '') {
@@ -177,7 +182,7 @@ class URL implements \JsonSerializable
                     }
                 }
                 break;
-            
+
             case 'pathname':
                 if (!$this->url->cannotBeABaseURLFlag) {
                     $this->url->path = [];
@@ -187,7 +192,7 @@ class URL implements \JsonSerializable
                     ]);
                 }
                 break;
-            
+
             case 'search':
                 if ($input === '') {
                     $this->url->query = null;
@@ -199,13 +204,13 @@ class URL implements \JsonSerializable
                         'url' => $this->url,
                         'state override' => 'query state'
                     ]);
-                    $list = lib\URLencoding::parseURLencodedString($query);
+                    $list = URLencoding::parseURLencodedString($query);
                 }
-                \Closure::bind(function ($list, $queryObject) {
+                Closure::bind(function ($list, $queryObject) {
                     array_splice($queryObject->list, 0, count($queryObject->list), $list);
                 }, null, $this->queryObject)->__invoke($list, $this->queryObject);
                 break;
-            
+
             case 'hash':
                 if ($input === '') {
                     $this->url->fragment = null;
@@ -218,59 +223,56 @@ class URL implements \JsonSerializable
                     ]);
                 }
                 break;
-            
+
             case 'origin':
             case 'searchParams':
                 TypeHinter::throwReadonlyException();
                 break;
-            
+
             default:
                 TypeHinter::triggerVisibilityErrorOrDefineProperty();
         }
     }
-    
+
     /**
      * @param string $name
      * @return string|URLSearchParams
      */
-    public function __get($name)
-    {
+    public function __get($name) {
         switch ($name) {
             case 'href':
                 $value = $this->url->serializeURL();
                 break;
-            
+
             case 'origin':
                 $value = self::serialiseOrigin($this->url->getOrigin());
                 break;
-            
+
             case 'protocol':
                 $value = $this->url->scheme . ':';
                 break;
-            
+
             case 'username':
                 $value = $this->url->username;
                 break;
-            
+
             case 'password':
                 $value = $this->url->password;
                 break;
-            
+
             case 'host':
-                $value = is_null($this->url->host)
-                    ? ''
-                    : lib\HostProcessing::serializeHost($this->url->host)
+                $value = is_null($this->url->host) ? '' : HostProcessing::serializeHost($this->url->host)
                         . (is_null($this->url->port) ? '' : ':' . $this->url->port);
                 break;
-            
+
             case 'hostname':
-                $value = is_null($this->url->host) ? '' : lib\HostProcessing::serializeHost($this->url->host);
+                $value = is_null($this->url->host) ? '' : HostProcessing::serializeHost($this->url->host);
                 break;
-            
+
             case 'port':
-                $value = is_null($this->url->port) ? '' : (string)$this->url->port;
+                $value = is_null($this->url->port) ? '' : (string) $this->url->port;
                 break;
-            
+
             case 'pathname':
                 if ($this->url->cannotBeABaseURLFlag) {
                     $value = $this->url->path[0];
@@ -280,57 +282,54 @@ class URL implements \JsonSerializable
                     $value = '/' . implode('/', $this->url->path);
                 }
                 break;
-            
+
             case 'search':
                 $value = is_null($this->url->query) || $this->url->query === '' ? '' : '?' . $this->url->query;
                 break;
-            
+
             case 'searchParams':
                 $value = $this->queryObject;
                 break;
-            
+
             case 'hash':
                 $value = is_null($this->url->fragment) || $this->url->fragment === '' ? '' : '#' . $this->url->fragment;
                 break;
-            
+
             default:
                 TypeHinter::triggerVisibilityErrorOrUndefinedNotice();
                 $value = null;
         }
-        
+
         return $value;
     }
-    
+
     /**
      * The serialization of an origin.
      * @link https://html.spec.whatwg.org/multipage/browsers.html#ascii-serialisation-of-an-origin HTML Standard
      * @param string[]|string $origin
      * @return string
      */
-    private static function serialiseOrigin($origin)
-    {
+    private static function serialiseOrigin($origin) {
         if (!is_array($origin)) {
             $result = 'null';
         } else {
-            $result = $origin[0] . '://' . lib\HostProcessing::serializeHost($origin[1]);
+            $result = $origin[0] . '://' . HostProcessing::serializeHost($origin[1]);
             if (isset(lib\URL::$specialSchemes[$origin[0]]) && $origin[2] !== lib\URL::$specialSchemes[$origin[0]]) {
                 $result .= ':' . $origin[2];
             }
         }
         return $result;
     }
-    
+
     /**
      * Returns a USVString containing the whole URL. It is a synonym for URL::$href.
      * @link https://url.spec.whatwg.org/#URL-stringification-behavior URL Standard
      * @return string USVString.
      */
-    public function __toString()
-    {
+    public function __toString() {
         return $this->__get('href');
     }
-    
-    
+
     /**
      * Returns the href property value.
      *
@@ -341,17 +340,136 @@ class URL implements \JsonSerializable
      * @link https://url.spec.whatwg.org/#dom-url-tojson URL Standard
      * @return string USVString.
      */
-    public function jsonSerialize()
-    {
+    public function jsonSerialize() {
         return $this->__get('href');
     }
-    
+
     /**
      * @param string $name
      * @return bool
      */
-    public function __isset($name)
-    {
+    public function __isset($name) {
         return in_array($name, ['href', 'origin', 'protocol', 'username', 'password', 'host', 'hostname', 'port', 'pathname', 'search', 'searchParams', 'hash']);
     }
+
+    ////////////////////////////   PSR-7   ////////////////////////////
+
+    /** {@inheritdoc} */
+    public function getScheme() {
+        return strtolower(preg_replace('/\:$/', "", $this->protocol ?? ""));
+    }
+
+    /** {@inheritdoc} */
+    public function withScheme($scheme) {
+        if (!is_string($scheme)) throw new InvalidArgumentException('Scheme must be a string');
+        $scheme = strtolower($scheme);
+        if ($scheme === $this->getScheme()) return $this;
+        $c = clone $this;
+        $c->protocol = $scheme;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function getHost() {
+        return strtolower($this->hostname ?? "");
+    }
+
+    /** {@inheritdoc} */
+    public function getPath() {
+        return $this->pathname;
+    }
+
+    /** {@inheritdoc} */
+    public function getPort() {
+        return $this->port ? (int) $this->port : null;
+    }
+
+    /** {@inheritdoc} */
+    public function getQuery() {
+        return preg_replace('/^\?/', "", $this->search);
+    }
+
+    /** {@inheritdoc} */
+    public function getUserInfo() {
+        if (empty($this->username)) return "";
+        $user = $this->username;
+        if (!empty($this->password)) $user .= ":" . $this->password;
+        return $user;
+    }
+
+    /** {@inheritdoc} */
+    public function getAuthority() {
+        return (($auth = $this->getUserInfo()) ? "$auth@" : "") .
+                $this->getHost() .
+                (($port = $this->getPort()) ? ":$port" : "");
+    }
+
+    /** {@inheritdoc} */
+    public function getFragment() {
+        return $this->url->fragment ?? "";
+    }
+
+    /** {@inheritdoc} */
+    public function withFragment($fragment) {
+        assert(is_string($fragment));
+        $c = clone $this;
+        $c->hash = $fragment;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function withHost($host) {
+        if (!is_string($host)) throw new InvalidArgumentException("Invalid Host");
+        $c = clone $this;
+        $c->hostname = $host;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function withPath($path) {
+        if (!is_string($path)) throw new InvalidArgumentException("Invalid Host");
+        $c = clone $this;
+        $c->pathname = $path;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function withPort($port) {
+        if (
+                !is_null($port)
+                and (
+                !is_int($port) or (
+                (0 > $port or 65535 < $port))
+                )
+        ) {
+            throw new InvalidArgumentException("Invalid Port");
+        }
+        $c = clone $this;
+        $c->port = $port ?? "";
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function withQuery($query) {
+        if (!is_string($query)) throw new InvalidArgumentException("Invalid Query");
+        $c = clone $this;
+        $c->search = $query;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function withUserInfo($user, $password = null) {
+        assert(is_string($user) and ( is_string($password) or is_null($password)));
+        $c = clone $this;
+        $c->username = $user;
+        $c->password = $password;
+        return $c;
+    }
+
+    /** {@inheritdoc} */
+    public function __clone() {
+        $this->url = clone $this->url;
+        $this->queryObject = clone $this->queryObject;
+    }
+
 }

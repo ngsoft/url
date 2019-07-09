@@ -16,6 +16,9 @@ nb-configuration.xml
 Thumbs.db
 ehthumbs.db
 
+### Linux ###
+.*
+
 # Folder config file
 Desktop.ini
 
@@ -33,8 +36,11 @@ $RECYCLE.BIN/
 
 
 ### Composer ###
+composer.lock
 composer.phar
 /vendor/
+
+
 
 # Commit your application's lock file http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file
 # You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
